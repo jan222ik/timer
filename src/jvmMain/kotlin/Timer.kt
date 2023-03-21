@@ -53,6 +53,7 @@ sealed class Timer {
 
         fun pause(): TimerPlan {
             val remDuration = System.currentTimeMillis().minus(timerStart).toDuration(DurationUnit.MILLISECONDS)
+            job.cancel()
             return timerPlan.copy(duration = duration.minus(remDuration))
         }
     }

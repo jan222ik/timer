@@ -2,18 +2,18 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.window.Notification
 import kotlinx.coroutines.CoroutineScope
-import java.util.function.Predicate
 
 val LocalTimerState = compositionLocalOf<TimerState> {
     error("CompositionLocal LocalTimerState not provided")
 }
+
 class TimerState(
     private val scope: CoroutineScope,
     private val sendNotification: (Notification) -> Unit,
     val activeTimers: SnapshotStateList<Timer>
 ) {
     fun addAndStart(timerPlan: Timer.TimerPlan) {
-        activeTimers.removeIf { it == timerPlan}
+        activeTimers.removeIf { it == timerPlan }
 
         val timerExecution = timerPlan.start(
             scope = scope,
