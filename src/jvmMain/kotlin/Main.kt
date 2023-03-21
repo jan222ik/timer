@@ -10,10 +10,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import org.jetbrains.jewel.themes.expui.standalone.theme.DarkTheme
+import window.WindowsWindow
+import window.TrayIcon
 
 @Composable
 fun App() {
@@ -27,14 +30,16 @@ fun App() {
 }
 
 fun main() = application {
+    var isVisible by remember { mutableStateOf(true) }
     val theme = DarkTheme
     val windowState = rememberWindowState(position = WindowPosition.Aligned(Alignment.BottomEnd))
     WindowsWindow(
-        onCloseRequest = ::exitApplication,
-        resizable = true,
+        onCloseRequest = { isVisible = false },
         theme = theme,
+        resizable = false,
         undecorated = true,
         state = windowState,
+        visible = isVisible,
         mainToolBar = {
             with(it) {
                 WindowDraggableArea {
@@ -45,4 +50,17 @@ fun main() = application {
     ) {
         App()
     }
+
+    if (!isVisible) {
+        Tray(
+            TrayIcon,
+            tooltip = "Timer",
+            onAction = { isVisible = true },
+            menu = {
+                Item("Exit", onClick = ::exitApplication)
+            },
+        )
+    }
 }
+
+
