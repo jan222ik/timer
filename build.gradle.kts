@@ -22,6 +22,7 @@ kotlin {
     sourceSets {
         val jvmMain by getting {
             dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-stdlib")
                 implementation(compose.desktop.currentOs)
                 implementation(files("libs/new-ui-desktop-0.0.1-SNAPSHOT.jar"))
                 implementation(files("libs/core-0.0.1-SNAPSHOT.jar"))

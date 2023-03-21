@@ -1,27 +1,50 @@
-import androidx.compose.material.Button
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.window.rememberNotification
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import window.LocalTray
 import window.LocalWindowActions
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Composable
 fun App() {
-    val scope = rememberCoroutineScope()
-    val tray = LocalTray.current
     val minimizeToTray = LocalWindowActions.current.minimizeToTray
-    val endNotification = rememberNotification("Timer", "Your timer has elapsed")
-    Button(onClick = {
-        scope.launch(Dispatchers.IO) {
-            minimizeToTray()
-            delay(3000)
-            tray.sendNotification(endNotification)
+
+    val timerState = LocalTimerState.current
+
+
+    if (timerState.activeTimers.isNotEmpty()) {
+        LazyColumn {
+            items(timerState.activeTimers) {
+                var timeRem by remember(it) { mutableStateOf(it.timerEnd.minus(System.currentTimeMillis()).toDuration(DurationUnit.MILLISECONDS)) }
+                LaunchedEffect(it) {
+                    launch(Dispatchers.IO) {
+                        while (true) {
+                            timeRem = it.timerEnd.minus(System.currentTimeMillis()).toDuration(DurationUnit.MILLISECONDS)
+                        }
+                    }
+                }
+                Text(
+                    text = it.timerPlan.uuid.toString() + " " + it.timerPlan.duration + " Remaining Time:" + timeRem.toString()
+                )
+            }
         }
-    }) {
-        Text(text = "Minimize and send notification after 3 sec")
+    } else {
+        CreateTimer(
+            onDone = { timer, toTray ->
+                timerState.addAndStart(timer)
+                if (toTray) {
+                    minimizeToTray.invoke()
+                }
+            }
+        )
     }
+
 }

@@ -1,11 +1,14 @@
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.window.WindowDraggableArea
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Tray
@@ -21,8 +24,14 @@ import window.WindowActions
 import window.WindowsWindow
 
 fun main() = application {
+    val scope = rememberCoroutineScope()
     val windowState = rememberWindowState(position = WindowPosition.Aligned(Alignment.BottomEnd))
     val trayState = rememberTrayState()
+    val timerState = TimerState(
+        scope = scope,
+        activeTimers = SnapshotStateList(),
+        sendNotification = trayState::sendNotification
+    )
 
     var isVisible by remember { mutableStateOf(true) }
 
@@ -44,7 +53,8 @@ fun main() = application {
         val windowActions = remember { WindowActions(minimizeToTray = { isVisible = false })}
         CompositionLocalProvider(
             LocalTray provides trayState,
-            LocalWindowActions provides windowActions
+            LocalWindowActions provides windowActions,
+            LocalTimerState provides timerState
         ) {
             App()
         }
