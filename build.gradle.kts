@@ -16,13 +16,17 @@ repositories {
 
 kotlin {
     jvm {
-        jvmToolchain(11)
+        jvmToolchain(17)
         withJava()
     }
     sourceSets {
         val jvmMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
+                implementation(files("libs/new-ui-desktop-0.0.1-SNAPSHOT.jar"))
+                implementation(files("libs/core-0.0.1-SNAPSHOT.jar"))
+                implementation(files("libs/compose-utils-0.0.1-SNAPSHOT.jar"))
+                implementation(files("libs/new-ui-standalone-0.0.1-SNAPSHOT.jar"))
             }
         }
         val jvmTest by getting
