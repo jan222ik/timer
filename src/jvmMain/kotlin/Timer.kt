@@ -1,19 +1,61 @@
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
-sealed interface Timer {
-    class TimerPlan(val duration: Duration) : Timer {
-        val uuid: UUID = UUID.randomUUID()
+sealed class Timer {
+    abstract val uuid: UUID
+    abstract val duration: Duration
+    data class TimerPlan(
+        override val duration: Duration
+    ) : Timer() {
+        override val uuid: UUID = UUID.randomUUID()
 
-        fun toExecution() : TimerExecution {
+        fun start(scope: CoroutineScope, onFinish: (TimerExecution) -> Unit): TimerExecution {
             val durationMillis = duration.toLong(DurationUnit.MILLISECONDS)
             val startMillis = System.currentTimeMillis()
-            return TimerExecution(timerPlan = this, timerStart = startMillis, timerEnd = startMillis.plus(durationMillis))
+            var timerExecution: TimerExecution? = null
+            val job = scope.launch(Dispatchers.IO) {
+                delay(durationMillis)
+                Retry()
+                    .times(10)
+                    .test(
+                        block = { timerExecution != null },
+                        onSuccess = { onFinish(timerExecution!!) }
+                    )
+            }
+            timerExecution = TimerExecution(
+                timerPlan = this,
+                timerStart = startMillis,
+                timerEnd = startMillis.plus(durationMillis),
+                job = job
+            )
+            return timerExecution
         }
     }
 
-    class TimerExecution(val timerPlan: TimerPlan, val timerStart: Long, val timerEnd: Long) : Timer
+    data class TimerExecution(
+        val timerPlan: TimerPlan,
+        val timerStart: Long,
+        val timerEnd: Long,
+        val job: Job
+    ) : Timer() {
+        override val duration: Duration
+            get() = timerPlan.duration
+
+        override val uuid: UUID
+            get() = timerPlan.uuid
+
+        fun pause(): TimerPlan {
+            val remDuration = System.currentTimeMillis().minus(timerStart).toDuration(DurationUnit.MILLISECONDS)
+            return timerPlan.copy(duration = duration.minus(remDuration))
+        }
+    }
 
 }
 
